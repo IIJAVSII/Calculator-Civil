@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Materiales - Ing. Jean Villanueva Sanchez</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans p-4 md:p-8 flex flex-col justify-between">
+
+  <div class="max-w-7xl mx-auto w-full space-y-6">
+    
+    <!-- Encabezado con Autor -->
+    <header class="bg-blue-900 text-white p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-yellow-400">
+      <div>
+        <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-2">
+          <i data-lucide="calculator" class="w-8 h-8 text-yellow-400"></i>
+          Cálculo de Materiales de Obra (RNE / CAPECO)
+        </h1>
+        <p class="text-blue-200 text-sm mt-1">Estimación automática de insumos para edificación con márgenes de desperdicio.</p>
+      </div>
+      <div class="bg-blue-800/80 p-3 rounded-xl border border-blue-700 text-right w-full md:w-auto">
+        <span class="text-[10px] uppercase tracking-widest text-yellow-400 block font-bold">Desarrollado por</span>
+        <span class="text-sm font-semibold text-white block">Ing. Jean Villanueva Sánchez</span>
+        <span class="text-[11px] text-blue-200 block">Normativa RNE / CAPECO</span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- COLUMNA IZQUIERDA: Entradas de Metrado -->
+      <section class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-md border border-slate-200 space-y-5">
+        <h2 class="text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+          1. Metrados por Partida
+        </h2>
+
+        <!-- Entrada 1: Concreto 210 -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Concreto F'c = 210 kg/cm² (m³)</label>
+          <span class="text-[11px] text-slate-400 block">Columnas, Vigas, Techos, Placas</span>
+          <input type="number" id="inputC210" value="10" min="0" step="0.1"
+            class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 font-semibold" oninput="calcular()">
+        </div>
+
+        <!-- Entrada 2: Concreto 175 -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Concreto F'c = 175 kg/cm² (m³)</label>
+          <span class="text-[11px] text-slate-400 block">Zapatas, Cimientos Corrido, Falsopiso</span>
+          <input type="number" id="inputC175" value="5" min="0" step="0.1"
+            class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 font-semibold" oninput="calcular()">
+        </div>
+
+        <!-- Entrada 3: Muro Ladrillo -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Muro Ladrillo Soga KK 18H (m²)</label>
+          <span class="text-[11px] text-slate-400 block">Asentado de muros con mortero 1:5</span>
+          <input type="number" id="inputMuro" value="50" min="0" step="0.1"
+            class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 font-semibold" oninput="calcular()">
+        </div>
+
+        <!-- Entrada 4: Tarrajeo -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Tarrajeo Interiores/Exteriores (m²)</label>
+          <span class="text-[11px] text-slate-400 block">Mortero 1:4 e=1.5cm</span>
+          <input type="number" id="inputTarrajeo" value="100" min="0" step="0.1"
+            class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-900 font-semibold" oninput="calcular()">
+        </div>
+
+        <!-- SECCIÓN ACERO DE REFUERZO -->
+        <div class="pt-4 border-t border-slate-200 space-y-3">
+          <h3 class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+            Parámetros del Acero
+          </h3>
+
+          <!-- Área construida / Techo -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Área de Techo / Losa (m²)</label>
+            <input type="number" id="inputAreaTecho" value="80" min="0" step="1"
+              class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs" oninput="calcular()">
+          </div>
+
+          <!-- Cuantía de acero (kg/m²) -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Cuantía Promedio (kg/m²)</label>
+            <span class="text-[10px] text-slate-400 block">Rango típico edificación: 8 a 12 kg/m²</span>
+            <input type="number" id="inputCuantia" value="10" min="1" step="0.5"
+              class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs" oninput="calcular()">
+          </div>
+
+          <!-- Selección del Diámetro de Varilla -->
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 uppercase tracking-wider block">Diámetro de Varilla Predominante</label>
+            <select id="selectDiametro" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs" onchange="calcular()">
+              <option value="2.00">6 mm (2.00 kg/varilla 9m)</option>
+              <option value="3.55">8 mm (3.55 kg/varilla 9m)</option>
+              <option value="5.04" selected>3/8" (5.04 kg/varilla 9m)</option>
+              <option value="8.95">1/2" (8.95 kg/varilla 9m)</option>
+              <option value="13.97">5/8" (13.97 kg/varilla 9m)</option>
+              <option value="20.12">3/4" (20.12 kg/varilla 9m)</option>
+              <option value="35.76">1" (35.76 kg/varilla 9m)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Configuración de Desperdicios -->
+        <div class="pt-4 border-t border-slate-200 space-y-3">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Porcentajes de Desperdicio</h3>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="text-slate-500">General (5%)</label>
+              <input type="number" id="despGeneral" value="5" min="0" max="20" class="w-full p-1.5 border rounded text-center bg-slate-50" oninput="calcular()">
+            </div>
+            <div>
+              <label class="text-slate-500">Acero (7%)</label>
+              <input type="number" id="despAcero" value="7" min="0" max="20" class="w-full p-1.5 border rounded text-center bg-slate-50" oninput="calcular()">
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- COLUMNA DERECHA: Resultados -->
+      <section class="lg:col-span-2 space-y-6">
+        
+        <div class="bg-white p-6 rounded-2xl shadow-md border border-slate-200">
+          <h2 class="text-lg font-bold text-slate-900 border-b pb-4 mb-6 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <i data-lucide="package-check" class="w-5 h-5 text-emerald-600"></i>
+              2. Resumen Total de Insumos Requeridos
+            </span>
+            <span class="text-xs font-normal text-slate-500 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">
+              Incluye % desperdicio
+            </span>
+          </h2>
+
+          <!-- Grid de Tarjetas de Materiales -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            
+            <!-- Cemento -->
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+              <span class="text-xs text-amber-700 font-bold block">Cemento Sol / Yura / Pacasmayo</span>
+              <span class="text-2xl font-black text-amber-900 block mt-1" id="resCemento">0</span>
+              <span class="text-xs text-amber-600 font-medium">Bolsas (42.5 kg)</span>
+            </div>
+
+            <!-- Arena Gruesa -->
+            <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+              <span class="text-xs text-yellow-700 font-bold block">Arena Gruesa</span>
+              <span class="text-2xl font-black text-yellow-900 block mt-1" id="resArenaGruesa">0</span>
+              <span class="text-xs text-yellow-600 font-medium">Metros Cúbicos (m³)</span>
+            </div>
+
+            <!-- Piedra Chancada -->
+            <div class="bg-slate-100 p-4 rounded-xl border border-slate-300">
+              <span class="text-xs text-slate-600 font-bold block">Piedra Chancada (1/2")</span>
+              <span class="text-2xl font-black text-slate-800 block mt-1" id="resPiedra">0</span>
+              <span class="text-xs text-slate-500 font-medium">Metros Cúbicos (m³)</span>
+            </div>
+
+            <!-- Ladrillo -->
+            <div class="bg-orange-50 p-4 rounded-xl border border-orange-200">
+              <span class="text-xs text-orange-700 font-bold block">Ladrillo KK 18H</span>
+              <span class="text-2xl font-black text-orange-900 block mt-1" id="resLadrillo">0</span>
+              <span class="text-xs text-orange-600 font-medium">Unidades</span>
+            </div>
+
+            <!-- Arena Fina -->
+            <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+              <span class="text-xs text-stone-700 font-bold block">Arena Fina</span>
+              <span class="text-2xl font-black text-stone-900 block mt-1" id="resArenaFina">0</span>
+              <span class="text-xs text-stone-600 font-medium">Metros Cúbicos (m³)</span>
+            </div>
+
+            <!-- Acero en Peso (kg / Ton) -->
+            <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+              <span class="text-xs text-blue-700 font-bold block">Peso Total de Acero</span>
+              <span class="text-2xl font-black text-blue-900 block mt-1" id="resAceroKg">0 kg</span>
+              <span class="text-xs text-blue-600 font-medium" id="resAceroTon">0.00 Toneladas</span>
+            </div>
+
+            <!-- Acero en Varillas -->
+            <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-200 sm:col-span-3">
+              <div class="flex justify-between items-center">
+                <div>
+                  <span class="text-xs text-indigo-700 font-bold block">Cantidad de Varillas Necesarias (9 metros)</span>
+                  <span class="text-2xl font-black text-indigo-900 mt-1 inline-block" id="resAceroVarillas">0</span>
+                  <span class="text-xs text-indigo-600 font-medium ml-1">Varillas del diámetro seleccionado</span>
+                </div>
+                <i data-lucide="shield-check" class="w-8 h-8 text-indigo-400"></i>
+              </div>
+            </div>
+
+            <!-- Agua -->
+            <div class="bg-sky-50 p-4 rounded-xl border border-sky-200 sm:col-span-3">
+              <div class="flex justify-between items-center">
+                <div>
+                  <span class="text-xs text-sky-700 font-bold block">Agua Estimada para Mezcla</span>
+                  <span class="text-2xl font-black text-sky-900 mt-1 inline-block" id="resAgua">0</span>
+                  <span class="text-xs text-sky-600 font-medium ml-1">Litros</span>
+                </div>
+                <i data-lucide="droplet" class="w-8 h-8 text-sky-400"></i>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Leyenda / Ratios -->
+        <div class="bg-white p-5 rounded-2xl shadow-md border border-slate-200">
+          <h3 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-blue-600"></i>
+            Ratios de dosificación considerados (CAPECO):
+          </h3>
+          <ul class="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
+            <li><b>Concreto F'c 210 kg/cm²:</b> 9.73 bolsas cemento/m³ + 0.52 m³ arena gruesa + 0.53 m³ piedra.</li>
+            <li><b>Concreto F'c 175 kg/cm²:</b> 8.43 bolsas cemento/m³ + 0.54 m³ arena gruesa + 0.55 m³ piedra.</li>
+            <li><b>Muro Soga (KK 18 Huecos):</b> 37.3 unidades/m² + 0.23 bolsas cemento/m².</li>
+            <li><b>Tarrajeo (1:4, e=1.5cm):</b> 0.14 bolsas cemento/m² + 0.02 m³ arena fina.</li>
+            <li><b>Acero de Refuerzo:</b> Peso nominal por varilla comercial de 9m según especificación de Aceros Arequipa / Siderperu (NTP 341.031).</li>
+          </ul>
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Pie de página con Firma -->
+  <footer class="mt-8 text-center text-xs text-slate-500 border-t border-slate-200 pt-4">
+    <p>Aplicativo Web de Cálculo de Materiales de Construcción según RNE / CAPECO</p>
+    <p class="font-semibold text-slate-700 mt-0.5">Creado por el <b>Ing. Jean Villanueva Sánchez</b></p>
+  </footer>
+
+  <!-- Script Lógica de Cálculo -->
+  <script>
+    function calcular() {
+      // Obtención de Metrados de los Inputs
+      const c210 = parseFloat(document.getElementById('inputC210').value) || 0;
+      const c175 = parseFloat(document.getElementById('inputC175').value) || 0;
+      const muro = parseFloat(document.getElementById('inputMuro').value) || 0;
+      const tarrajeo = parseFloat(document.getElementById('inputTarrajeo').value) || 0;
+
+      // Parámetros de Acero
+      const areaTecho = parseFloat(document.getElementById('inputAreaTecho').value) || 0;
+      const cuantia = parseFloat(document.getElementById('inputCuantia').value) || 0;
+      const pesoVarillaSel = parseFloat(document.getElementById('selectDiametro').value) || 5.04;
+
+      // Porcentajes de Desperdicios
+      const despGen = (parseFloat(document.getElementById('despGeneral').value) || 0) / 100;
+      const despAc = (parseFloat(document.getElementById('despAcero').value) || 0) / 100;
+
+      // 1. Cemento (bolsas)
+      let cemento = (c210 * 9.73) + (c175 * 8.43) + (muro * 0.23) + (tarrajeo * 0.14);
+      cemento *= (1 + despGen);
+
+      // 2. Arena Gruesa (m³)
+      let arenaGruesa = (c210 * 0.52) + (c175 * 0.54) + (muro * 0.025);
+      arenaGruesa *= (1 + despGen);
+
+      // 3. Piedra Chancada (m³)
+      let piedra = (c210 * 0.53) + (c175 * 0.55);
+      piedra *= (1 + despGen);
+
+      // 4. Ladrillo (Unidades)
+      let ladrillos = muro * 37.3;
+      ladrillos *= (1 + despGen);
+
+      // 5. Arena Fina (m³)
+      let arenaFina = tarrajeo * 0.02;
+      arenaFina *= (1 + despGen);
+
+      // 6. Acero de Refuerzo
+      let aceroPesoNetoKg = areaTecho * cuantia;
+      let aceroPesoTotalKg = aceroPesoNetoKg * (1 + despAc);
+      let aceroToneladas = aceroPesoTotalKg / 1000;
+      let cantidadVarillas = aceroPesoTotalKg / pesoVarillaSel;
+
+      // 7. Agua (Litros estimados)
+      let agua = (c210 * 185) + (c175 * 185) + (muro * 10) + (tarrajeo * 8);
+
+      // Render de Resultados en pantalla
+      document.getElementById('resCemento').innerText = Math.ceil(cemento);
+      document.getElementById('resArenaGruesa').innerText = arenaGruesa.toFixed(2);
+      document.getElementById('resPiedra').innerText = piedra.toFixed(2);
+      document.getElementById('resLadrillo').innerText = Math.ceil(ladrillos);
+      document.getElementById('resArenaFina').innerText = arenaFina.toFixed(2);
+      
+      // Resultados Acero
+      document.getElementById('resAceroKg').innerText = Math.ceil(aceroPesoTotalKg) + " kg";
+      document.getElementById('resAceroTon').innerText = aceroToneladas.toFixed(2) + " Toneladas";
+      document.getElementById('resAceroVarillas').innerText = Math.ceil(cantidadVarillas);
+
+      document.getElementById('resAgua').innerText = Math.ceil(agua).toLocaleString('es-PE');
+    }
+
+    // Inicializar íconos y cálculo inicial
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      calcular();
+    });
+  </script>
+</body>
+</html>

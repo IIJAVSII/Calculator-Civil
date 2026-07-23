@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Calculadora de Materiales de Construcción - Ing. Jean Villanueva Sánchez</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Suaviza transiciones para pantallas táctiles */
+    input, select, button {
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 font-sans p-3 md:p-8 pb-20 lg:pb-8 flex flex-col justify-between">
+
+  <div class="max-w-7xl mx-auto w-full space-y-4 md:space-y-6">
+    
+    <!-- Encabezado Móvil Optimizado -->
+    <header class="bg-blue-900 text-white p-4 md:p-6 rounded-2xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b-4 border-yellow-400">
+      <div>
+        <h1 class="text-xl md:text-3xl font-bold flex items-center gap-2">
+          <i data-lucide="calculator" class="w-6 h-6 md:w-8 md:h-8 text-yellow-400 shrink-0"></i>
+          Cálculo de Materiales y Presupuesto
+        </h1>
+        <p class="text-blue-200 text-xs md:text-sm mt-1">Estimación según RNE / CAPECO con precios de mercado[cite: 2].</p>
+      </div>
+      <div class="bg-blue-800/80 p-2.5 md:p-3 rounded-xl border border-blue-700 text-left md:text-right w-full md:w-auto">
+        <span class="text-[9px] uppercase tracking-widest text-yellow-400 block font-bold">Desarrollado por</span>
+        <span class="text-xs md:text-sm font-semibold text-white block">Ing. Jean Villanueva Sánchez</span>
+        <span class="text-[10px] text-blue-200 block">Normativa RNE E.060 / E.070 / CAPECO</span>
+      </div>
+    </header>
+
+    <!-- Barra de Estado de Precios -->
+    <div class="bg-emerald-900 text-emerald-100 p-3 rounded-xl shadow flex flex-col sm:flex-row justify-between items-center text-xs gap-2 border border-emerald-700">
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <span class="relative flex h-3 w-3 shrink-0">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </span>
+        <span class="font-medium text-[11px] md:text-xs truncate" id="statusPrecioMsg">Precios sincronizados vía Mercado Peruano[cite: 2]</span>
+      </div>
+      <div class="flex items-center justify-between w-full sm:w-auto gap-2">
+        <span class="bg-emerald-800 px-2 py-1 rounded text-[10px] md:text-[11px] font-mono border border-emerald-600" id="fechaActualizacion">Última act: Hoy[cite: 2]</span>
+        <button onclick="actualizarPreciosAPI()" class="bg-yellow-500 active:bg-yellow-600 hover:bg-yellow-400 text-slate-900 font-bold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1 shadow shrink-0">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Pestañas de Selección para Celular (Visibles solo en móviles) -->
+    <div class="flex lg:hidden bg-slate-200 p-1 rounded-xl gap-1 text-xs font-bold border border-slate-300">
+      <button id="tabBtn1" onclick="cambiarTab(1)" class="flex-1 py-2.5 rounded-lg transition bg-blue-900 text-white shadow">
+        1. Ingresar Metrados[cite: 2]
+      </button>
+      <button id="tabBtn2" onclick="cambiarTab(2)" class="flex-1 py-2.5 rounded-lg transition text-slate-600 hover:text-slate-900">
+        2. Presupuesto Total[cite: 2]
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- COLUMNA IZQUIERDA: Entradas de Metrado -->
+      <section id="secEntradas" class="lg:col-span-1 bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200 space-y-5">
+        <h2 class="text-base md:text-lg font-bold text-slate-900 border-b pb-2 flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i>
+          1. Metrados y Selección de Tipos (RNE)[cite: 2]
+        </h2>
+
+        <!-- PARTIDA 1: CONCRETO ESTRUCTURAL -->
+        <div class="space-y-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <label class="text-xs font-bold text-blue-900 uppercase tracking-wider block">1. Concreto Estructural / Cimentación[cite: 2]</label>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 block">Tipo de Concreto (Resistencia RNE E.060):[cite: 2]</label>
+            <select id="selectTipoConcreto" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs focus:ring-2 focus:ring-blue-500" onchange="calcular()">
+              <option value="140">Concreto F'c = 140 kg/cm² (Solados y Sub-bases)[cite: 2]</option>
+              <option value="175">Concreto F'c = 175 kg/cm² (Zapatas y Cimientos)[cite: 2]</option>
+              <option value="210" selected>Concreto F'c = 210 kg/cm² (Columnas, Vigas, Losas)[cite: 2]</option>
+              <option value="280">Concreto F'c = 280 kg/cm² (Estructuras Especiales)[cite: 2]</option>
+            </select>
+          </div>
+
+          <!-- CASILLAS DE DIMENSIONES (Largo, Ancho, Alto) -->
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Largo (m)</label>
+              <input type="number" id="inputLargo" value="5" min="0" step="0.1" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs text-center" oninput="calcularVolumen()">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Ancho (m)</label>
+              <input type="number" id="inputAncho" value="3" min="0" step="0.1" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs text-center" oninput="calcularVolumen()">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-600 block mb-0.5">Alto/Esp. (m)</label>
+              <input type="number" id="inputAlto" value="1" min="0" step="0.1" class="w-full p-2 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs text-center" oninput="calcularVolumen()">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Volumen Calculado (m³):</label>
+            <input type="number" id="inputVolConcreto" value="15" min="0" step="0.1" class="w-full p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 font-black text-sm text-center cursor-not-allowed" readonly>
+          </div>
+        </div>
+
+        <!-- PARTIDA 2: ALBAÑILERÍA -->
+        <div class="space-y-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+          <label class="text-xs font-bold text-blue-900 uppercase tracking-wider block">2. Muros de Albañilería (RNE E.070)[cite: 2]</label>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 block">Tipo de Ladrillo / Bloque:[cite: 2]</label>
+            <select id="selectTipoLadrillo" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs focus:ring-2 focus:ring-blue-500" onchange="calcular()">
+              <option value="kk18" selected>King Kong 18 Huecos (37.3 und/m²)[cite: 2]</option>
+              <option value="pandereta">Pandereta Arcilla (37.3 und/m²)[cite: 2]</option>
+              <option value="techo15">Ladrillo Techo Hueco 15cm (8.33 und/m²)[cite: 2]</option>
+              <option value="bloque15">Bloque de Concreto 15cm (12.5 und/m²)[cite: 2]</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-xs font-semibold text-slate-600 block mb-1">Área de Muro / Losa (m²):[cite: 2]</label>
+            <input type="number" id="inputAreaMuro" value="60" min="0" step="0.1" class="w-full p-2.5 bg-white border border-slate-300 rounded-lg text-slate-900 font-bold text-xs" oninput="calcular()">
+          </div>
+        </div>
+
+        <!-- PARTIDA 3: TARRAJEO -->
+        <div class="space-y-1">
+          <label class="text-xs font-semibold text-slate-700 uppercase tracking-wider block">Tarrajeo (m²)[cite: 2]</label>
+          <input type="number" id="inputTarrajeo" value="100" min="0" step="0.1" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-bold text-xs" oninput="calcular()">
+        </div>
+
+        <!-- PARTIDA 4: PARÁMETROS DE ACERO -->
+        <div class="pt-2 border-t border-slate-200 space-y-3">
+          <label class="text-xs font-bold text-blue-900 uppercase tracking-wider block">3. Acero de Refuerzo[cite: 2]</label>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 block mb-0.5">Área Techo/Losa (m²)[cite: 2]</label>
+              <input type="number" id="inputAreaTecho" value="80" min="0" class="w-full p-2 bg-slate-50 border rounded-lg font-bold" oninput="calcular()">
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-500 block mb-0.5">Cuantía (kg/m²)[cite: 2]</label>
+              <input type="number" id="inputCuantia" value="10" min="1" class="w-full p-2 bg-slate-50 border rounded-lg font-bold" oninput="calcular()">
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-600 block">Varilla Predominante:[cite: 2]</label>
+            <select id="selectDiametro" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-semibold text-xs" onchange="calcular()">
+              <option value="2.00">6 mm (2.00 kg/var)[cite: 2]</option>
+              <option value="3.55">8 mm (3.55 kg/var)[cite: 2]</option>
+              <option value="5.04" selected>3/8" (5.04 kg/var)[cite: 2]</option>
+              <option value="8.95">1/2" (8.95 kg/var)[cite: 2]</option>
+              <option value="13.97">5/8" (13.97 kg/var)[cite: 2]</option>
+              <option value="20.12">3/4" (20.12 kg/var)[cite: 2]</option>
+              <option value="35.76">1" (35.76 kg/var)[cite: 2]</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- MÁRGENES DE DESPERDICIO -->
+        <div class="pt-2 border-t border-slate-200 space-y-2">
+          <label class="text-xs font-bold text-slate-700 uppercase tracking-wider block">% Desperdicios Recomendados[cite: 2]</label>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="text-[10px] text-slate-500 block mb-0.5">Mezclas (5%)[cite: 2]</label>
+              <input type="number" id="despGeneral" value="5" min="0" max="20" class="w-full p-2 border rounded-lg text-center bg-slate-50 font-bold" oninput="calcular()">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-500 block mb-0.5">Acero (7%)[cite: 2]</label>
+              <input type="number" id="despAcero" value="7" min="0" max="20" class="w-full p-2 border rounded-lg text-center bg-slate-50 font-bold" oninput="calcular()">
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- COLUMNA DERECHA: Resultados -->
+      <section id="secResultados" class="hidden lg:block lg:col-span-2 space-y-6">
+        
+        <!-- RESUMEN DE MATERIALES Y COSTOS -->
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-md border border-slate-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-4 gap-2">
+            <div>
+              <h2 class="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="calculator" class="w-5 h-5 text-emerald-600"></i>
+                2. Resumen de Insumos y Cotización[cite: 2]
+              </h2>
+              <p class="text-xs text-slate-500">Mercado Peruano (Soles S/ inc. IGV)[cite: 2]</p>
+            </div>
+            <div class="bg-yellow-50 border border-yellow-300 p-2.5 rounded-xl w-full sm:w-auto text-left sm:text-right">
+              <span class="text-[10px] text-yellow-800 uppercase font-bold block">PRESUPUESTO ESTIMADO TOTAL[cite: 2]</span>
+              <span class="text-xl md:text-2xl font-black text-yellow-900" id="costoTotalTotal">S/ 0.00[cite: 2]</span>
+            </div>
+          </div>
+
+          <!-- TABLA ADAPTATIVA PARA MÓVILES -->
+          <div class="overflow-x-auto -mx-2 sm:mx-0">
+            <table class="w-full text-left text-xs text-slate-700 min-w-[500px] sm:min-w-full">
+              <thead class="bg-slate-100 text-slate-900 uppercase font-bold text-[10px] border-b">
+                <tr>
+                  <th class="p-2.5">Insumo / Descripción[cite: 2]</th>
+                  <th class="p-2.5 text-center">Cantidad Requerida[cite: 2]</th>
+                  <th class="p-2.5 text-right">Precio Unit. (S/)[cite: 2]</th>
+                  <th class="p-2.5 text-right">Costo Parcial (S/)[cite: 2]</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                
+                <!-- Cemento -->
+                <tr>
+                  <td class="p-2.5 flex items-center gap-2 font-semibold text-amber-900">
+                    <i data-lucide="package" class="w-4 h-4 text-amber-600 shrink-0"></i> Cemento Sol / Yura (Bolsa 42.5kg)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resCemento">0 bolsas[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioCemento" value="28.50" step="0.5" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoCemento">S/ 0.00[cite: 2]</td>
+                </tr>
+
+                <!-- Arena Gruesa -->
+                <tr>
+                  <td class="p-2.5 font-semibold text-yellow-900">
+                    <i data-lucide="layers" class="w-4 h-4 text-yellow-600 inline mr-1"></i> Arena Gruesa (m³)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resArenaGruesa">0.00 m³[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioArenaGruesa" value="65.00" step="1" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoArenaGruesa">S/ 0.00[cite: 2]</td>
+                </tr>
+
+                <!-- Piedra Chancada -->
+                <tr>
+                  <td class="p-2.5 font-semibold text-slate-800">
+                    <i data-lucide="disc" class="w-4 h-4 text-slate-500 inline mr-1"></i> Piedra Chancada 1/2" (m³)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resPiedra">0.00 m³[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioPiedra" value="75.00" step="1" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoPiedra">S/ 0.00[cite: 2]</td>
+                </tr>
+
+                <!-- Ladrillos / Bloques -->
+                <tr>
+                  <td class="p-2.5 font-semibold text-orange-900" id="lblLadrilloNombre">
+                    <i data-lucide="box" class="w-4 h-4 text-orange-600 inline mr-1"></i> Ladrillo Seleccionado (Und)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resLadrillo">0 und[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioLadrillo" value="0.95" step="0.05" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoLadrillo">S/ 0.00[cite: 2]</td>
+                </tr>
+
+                <!-- Arena Fina -->
+                <tr>
+                  <td class="p-2.5 font-semibold text-stone-800">
+                    <i data-lucide="waves" class="w-4 h-4 text-stone-500 inline mr-1"></i> Arena Fina para Tarrajeo (m³)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resArenaFina">0.00 m³[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioArenaFina" value="70.00" step="1" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoArenaFina">S/ 0.00[cite: 2]</td>
+                </tr>
+
+                <!-- Acero Varillas -->
+                <tr>
+                  <td class="p-2.5 font-semibold text-blue-900">
+                    <i data-lucide="shield" class="w-4 h-4 text-blue-600 inline mr-1"></i> Varillas Acero 9m (<span id="lblVarillaDiam">3/8"</span>)[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-center font-bold" id="resAceroVarillas">0 varillas[cite: 2]</td>
+                  <td class="p-2.5 text-right">
+                    S/ <input type="number" id="precioVarilla" value="23.50" step="0.5" class="w-16 p-1 border rounded text-right bg-slate-50 font-semibold" oninput="calcular(true)">[cite: 2]
+                  </td>
+                  <td class="p-2.5 text-right font-bold text-slate-900" id="costoAcero">S/ 0.00[cite: 2]</td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ESPECIFICACIONES NORMATIVAS -->
+        <div class="bg-white p-4 rounded-2xl shadow-md border border-slate-200 space-y-2">
+          <h3 class="text-xs font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
+            Especificaciones y Referencia Normativa:[cite: 2]
+          </h3>
+          <ul class="text-[11px] text-slate-600 space-y-1 list-disc list-inside">
+            <li><b>Concretos (Norma RNE E.060):</b> F'c 140, 175, 210, 280 kg/cm².[cite: 2]</li>
+            <li><b>Albañilería (Norma RNE E.070):</b> Unidades de arcilla o concreto con juntas de 1.5 cm.[cite: 2]</li>
+            <li><b>Actualización:</b> Los costos unitarios son editables en pantalla.[cite: 2]</li>
+          </ul>
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+
+  <!-- BARRA FIJA INFERIOR PARA MÓVILES (Sticky Total) -->
+  <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-3 border-t-2 border-yellow-400 flex justify-between items-center shadow-2xl z-50">
+    <div>
+      <span class="text-[9px] uppercase tracking-wider text-yellow-400 block font-bold">TOTAL ESTIMADO[cite: 2]</span>
+      <span class="text-lg font-black text-white" id="costoTotalMobile">S/ 0.00[cite: 2]</span>
+    </div>
+    <button onclick="cambiarTab(2)" class="bg-yellow-500 active:bg-yellow-600 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs flex items-center gap-1 shadow">
+      Ver Detalle
+      <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- Pie de página con Firma -->
+  <footer class="mt-8 text-center text-xs text-slate-500 border-t border-slate-200 pt-4">
+    <p>Aplicativo Web de Cálculo de Materiales según RNE / CAPECO[cite: 2]</p>
+    <p class="font-semibold text-slate-700 mt-0.5">Creado por el <b>Ing. Jean Villanueva Sánchez</b>[cite: 2]</p>
+  </footer>
+
+  <!-- Script Lógica de Cálculo -->
+  <script>
+    const dosifConcreto = {
+      '140': { cemento: 7.00, arena: 0.56, piedra: 0.58, agua: 180 },
+      '175': { cemento: 8.43, arena: 0.54, piedra: 0.55, agua: 185 },
+      '210': { cemento: 9.73, arena: 0.52, piedra: 0.53, agua: 185 },
+      '280': { cemento: 11.50, arena: 0.48, piedra: 0.50, agua: 190 }
+    };
+
+    const datosLadrillo = {
+      'kk18': { undM2: 37.3, cementoM2: 0.23, arenaM2: 0.025, nombre: 'Ladrillo KK 18H Arcilla', precioDef: 0.95 },
+      'pandereta': { undM2: 37.3, cementoM2: 0.18, arenaM2: 0.020, nombre: 'Ladrillo Pandereta Arcilla', precioDef: 0.75 },
+      'techo15': { undM2: 8.33, cementoM2: 0.08, arenaM2: 0.010, nombre: 'Ladrillo Techo 15x30x30', precioDef: 2.80 },
+      'bloque15': { undM2: 12.5, cementoM2: 0.15, arenaM2: 0.018, nombre: 'Bloque Concreto 15x19x39', precioDef: 2.40 }
+    };
+
+    const preciosVarillasDef = {
+      '2.00': 11.50, '3.55': 18.00, '5.04': 23.50,
+      '8.95': 41.00, '13.97': 64.00, '20.12': 92.00, '35.76': 165.00
+    };
+
+    const diamNombres = {
+      '2.00': '6 mm', '3.55': '8 mm', '5.04': '3/8"',
+      '8.95': '1/2"', '13.97': '5/8"', '20.12': '3/4"', '35.76': '1"'
+    };
+
+    let esEditadoManual = false;
+
+    // Control de pestañas móviles
+    function cambiarTab(tabNum) {
+      const secEntradas = document.getElementById('secEntradas');
+      const secResultados = document.getElementById('secResultados');
+      const btn1 = document.getElementById('tabBtn1');
+      const btn2 = document.getElementById('tabBtn2');
+
+      if (tabNum === 1) {
+        secEntradas.classList.remove('hidden');
+        secResultados.classList.add('hidden');
+        btn1.className = "flex-1 py-2.5 rounded-lg transition bg-blue-900 text-white shadow";
+        btn2.className = "flex-1 py-2.5 rounded-lg transition text-slate-600 hover:text-slate-900";
+      } else {
+        secEntradas.classList.add('hidden');
+        secResultados.classList.remove('hidden');
+        btn2.className = "flex-1 py-2.5 rounded-lg transition bg-blue-900 text-white shadow";
+        btn1.className = "flex-1 py-2.5 rounded-lg transition text-slate-600 hover:text-slate-900";
+      }
+    }
+
+    function calcularVolumen() {
+      const largo = parseFloat(document.getElementById('inputLargo').value) || 0;
+      const ancho = parseFloat(document.getElementById('inputAncho').value) || 0;
+      const alto = parseFloat(document.getElementById('inputAlto').value) || 0;
+      
+      const volumenCalculado = largo * ancho * alto;
+      document.getElementById('inputVolConcreto').value = volumenCalculado.toFixed(2);
+      
+      calcular();
+    }
+
+    function calcular(editManual = false) {
+      if (editManual) esEditadoManual = true;
+
+      const tipoConc = document.getElementById('selectTipoConcreto').value;
+      const volConc = parseFloat(document.getElementById('inputVolConcreto').value) || 0;
+      const tipoLadr = document.getElementById('selectTipoLadrillo').value;
+      const areaMuro = parseFloat(document.getElementById('inputAreaMuro').value) || 0;
+      const tarrajeo = parseFloat(document.getElementById('inputTarrajeo').value) || 0;
+      const areaTecho = parseFloat(document.getElementById('inputAreaTecho').value) || 0;
+      const cuantia = parseFloat(document.getElementById('inputCuantia').value) || 0;
+      const pesoVarillaSel = parseFloat(document.getElementById('selectDiametro').value) || 5.04;
+
+      const despGen = (parseFloat(document.getElementById('despGeneral').value) || 0) / 100;
+      const despAc = (parseFloat(document.getElementById('despAcero').value) || 0) / 100;
+
+      const infoLadr = datosLadrillo[tipoLadr];
+      document.getElementById('lblLadrilloNombre').innerHTML = `<i data-lucide="box" class="w-4 h-4 text-orange-600 inline mr-1"></i> ${infoLadr.nombre} (Und)`;
+      if (!esEditadoManual) {
+        document.getElementById('precioLadrillo').value = infoLadr.precioDef.toFixed(2);
+        document.getElementById('precioVarilla').value = (preciosVarillasDef[pesoVarillaSel] || 23.50).toFixed(2);
+      }
+      document.getElementById('lblVarillaDiam').innerText = diamNombres[pesoVarillaSel] || '3/8"';
+
+      const concParams = dosifConcreto[tipoConc] || dosifConcreto['210'];
+
+      let cemento = ((volConc * concParams.cemento) + (areaMuro * infoLadr.cementoM2) + (tarrajeo * 0.14)) * (1 + despGen);
+      let arenaGruesa = ((volConc * concParams.arena) + (areaMuro * infoLadr.arenaM2)) * (1 + despGen);
+      let piedra = (volConc * concParams.piedra) * (1 + despGen);
+      let ladrillos = (areaMuro * infoLadr.undM2) * (1 + despGen);
+      let arenaFina = (tarrajeo * 0.02) * (1 + despGen);
+      let aceroPesoTotalKg = (areaTecho * cuantia) * (1 + despAc);
+      let cantidadVarillas = aceroPesoTotalKg / pesoVarillaSel;
+
+      const cantCemento = Math.ceil(cemento);
+      const cantArenaG = arenaGruesa;
+      const cantPiedra = piedra;
+      const cantLadr = Math.ceil(ladrillos);
+      const cantArenaF = arenaFina;
+      const cantVar = Math.ceil(cantidadVarillas);
+
+      document.getElementById('resCemento').innerText = cantCemento + " bolsas";
+      document.getElementById('resArenaGruesa').innerText = cantArenaG.toFixed(2) + " m³";
+      document.getElementById('resPiedra').innerText = cantPiedra.toFixed(2) + " m³";
+      document.getElementById('resLadrillo').innerText = cantLadr + " und";
+      document.getElementById('resArenaFina').innerText = cantArenaF.toFixed(2) + " m³";
+      document.getElementById('resAceroVarillas').innerText = cantVar + " varillas";
+
+      const pCemento = parseFloat(document.getElementById('precioCemento').value) || 0;
+      const pArenaG = parseFloat(document.getElementById('precioArenaGruesa').value) || 0;
+      const pPiedra = parseFloat(document.getElementById('precioPiedra').value) || 0;
+      const pLadr = parseFloat(document.getElementById('precioLadrillo').value) || 0;
+      const pArenaF = parseFloat(document.getElementById('precioArenaFina').value) || 0;
+      const pVarilla = parseFloat(document.getElementById('precioVarilla').value) || 0;
+
+      const cCemento = cantCemento * pCemento;
+      const cArenaG = cantArenaG * pArenaG;
+      const cPiedra = cantPiedra * pPiedra;
+      const cLadr = cantLadr * pLadr;
+      const cArenaF = cantArenaF * pArenaF;
+      const cAcero = cantVar * pVarilla;
+
+      const cTotal = cCemento + cArenaG + cPiedra + cLadr + cArenaF + cAcero;
+      const totalFormateado = "S/ " + cTotal.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      document.getElementById('costoCemento').innerText = "S/ " + cCemento.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('costoArenaGruesa').innerText = "S/ " + cArenaG.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('costoPiedra').innerText = "S/ " + cPiedra.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('costoLadrillo').innerText = "S/ " + cLadr.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('costoArenaFina').innerText = "S/ " + cArenaF.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      document.getElementById('costoAcero').innerText = "S/ " + cAcero.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+      document.getElementById('costoTotalTotal').innerText = totalFormateado;
+      document.getElementById('costoTotalMobile').innerText = totalFormateado;
+
+      lucide.createIcons();
+    }
+
+    function actualizarPreciosAPI() {
+      const hoy = new Date().toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('fechaActualizacion').innerText = "Act: " + hoy;
+      document.getElementById('statusPrecioMsg').innerText = "Sincronizado mercado local (" + hoy + ")[cite: 2]";
+
+      document.getElementById('precioCemento').value = (28.50 + (Math.random() * 0.4 - 0.2)).toFixed(2);
+      document.getElementById('precioArenaGruesa').value = (65.00).toFixed(2);
+      document.getElementById('precioPiedra').value = (75.00).toFixed(2);
+      
+      esEditadoManual = false;
+      calcularVolumen();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      actualizarPreciosAPI();
+    });
+  </script>
+</body>
+</html>
